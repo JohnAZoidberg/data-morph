@@ -32,8 +32,6 @@ jobs:
         fail-fast: false
         matrix:
             python-version: ["3.12"]
-            dataset: [ 'bunny'] #, 'cat', 'dino', 'dog', 'music', 'panda', 'pi', 'Python', 'SDS', 'sheep', 'soccer' ]
-            shape: [ 'bullseye'] #, 'circle', 'high_lines', 'h_lines', 'slant_down', 'slant_up', 'v_lines', 'wide_lines', 'x', 'dots', 'down_parab', 'heart', 'left_parab', 'scatter', 'right_parab', 'up_parab', 'diamond', 'rectangle', 'rings', 'star' ]
 
     steps:
       - uses: actions/checkout@v4
@@ -49,10 +47,14 @@ jobs:
           python -m pip install setuptools --upgrade
           python -m pip install .
 
-      - name: Generate shape
-        run: data-morph --start-shape ${{ matrix.dataset}} --target-shape ${{ matrix.shape }}
+      # For core code changes, we want to do a couple morphs to see if they still look ok
+      - name: Morph shapes
+        run: |
+          data-morph \
+               --start-shape panda \
+               --target-shape bullseye heart rectangle star slant_up
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.dataset}}_to_${{ matrix.shape }}
+          name: morphed_data
           path: morphed_data
