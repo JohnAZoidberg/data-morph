@@ -61,3 +61,9 @@ jobs:
       - name: Install testing dependencies
         run: python -m pip install '.[dev]'
 
+      - name: Generate shape
+        run: data-morph --start-shape panda --target-shape star
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: morphed_data
