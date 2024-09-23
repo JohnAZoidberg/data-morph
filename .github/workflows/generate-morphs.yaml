@@ -47,34 +47,37 @@ jobs:
           python -m pip install setuptools --upgrade
           python -m pip install .
 
-      - name: Get all test, doc and src files that have changed
+      - name: Get all dataset files that have changed
         id: changed-files-yaml
         uses: tj-actions/changed-files@v45
         with:
           files_yaml: |
-            datasets:
+            dataset:
               - '**.md'
               - src/data_morph/data/starter_shapes/*
 
-      - name: Run step if test file(s) change
-        if: steps.changed-files-yaml.outputs.datasets_any_changed == 'true'
+      # If new datasets are added
+      - name: Generate morphs from new or changed datasets
+        if: steps.changed-files-yaml.outputs.dataset_any_changed == 'true'
         env:
-          DATASETS_ALL_CHANGED_FILES: ${{ steps.changed-files-yaml.outputs.datasets_all_changed_files }}
+          DATASET_ALL_CHANGED_FILES: ${{ steps.changed-files-yaml.outputs.dataset_all_changed_files }}
         run: |
           echo "One or more dataset file(s) has changed."
-          echo "List all the files that have changed: $DATASETS_ALL_CHANGED_FILES"
-          python bin/ci.py $DATASETS_ALL_CHANGED_FILES
-          DATASET_ARGS=$(python bin/ci.py $DATASETS_ALL_CHANGED_FILES)
-          data-morph \
+          echo "List all the files that have changed: $DATASET_ALL_CHANGED_FILES"
+          DATASET_ARGS=$(python bin/ci.py $DATASET_ALL_CHANGED_FILES)
+          echo "Generating morphs for the following datasets: $DATASET_ARGS"
+          parallel -j0 data-morph \
                --start-shape $DATASET_ARGS \
-               --target-shape slant_up
+               --target-shape {} \
+               ::: bullseye heart rectangle star slant_up
 
       # For core code changes, we want to do a couple morphs to see if they still look ok
-      #- name: Morph shapes
-      #  run: |
-      #    data-morph \
-      #         --start-shape panda \
-      #         --target-shape bullseye heart rectangle star slant_up
+      - name: Morph shapes
+        run: |
+          parallel -j0 data-morph \
+               --start-shape panda \
+               --target-shape {} \
+               ::: bullseye heart rectangle star slant_up
 
       - uses: actions/upload-artifact@v4
         with:
