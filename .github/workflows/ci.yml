@@ -10,15 +10,6 @@ name: CI
 on:
   push:
     branches: [ "*" ]
-    paths-ignore:
-      - 'docs/**'
-      - '.github/**'
-    tags: [ "v*" ]
-
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '.github/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
