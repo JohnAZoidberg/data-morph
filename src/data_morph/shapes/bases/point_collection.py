@@ -21,6 +21,7 @@ class PointCollection(Shape):
         An iterable of (x, y) values representing an arrangement of points.
     """
 
+
     def __init__(self, *points: Iterable[Number]) -> None:
         self.points = np.array(points)
         """numpy.ndarray: An array of (x, y) values

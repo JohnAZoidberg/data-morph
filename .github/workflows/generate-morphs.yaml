@@ -12,6 +12,8 @@ on:
   pull_request:
     paths-ignore:
       - 'docs/**'
+      - 'src/tests/**'
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -53,10 +55,11 @@ jobs:
         with:
           files_yaml: |
             dataset:
-              - '**.md'
               - src/data_morph/data/starter_shapes/*
+            shape:
+              - src/data_morph/shapes/**
 
-      # If new datasets are added
+      # If datasets are added or changed
       - name: Generate morphs from new or changed datasets
         if: steps.changed-files-yaml.outputs.dataset_any_changed == 'true'
         env:
@@ -71,13 +74,27 @@ jobs:
                --target-shape {} \
                ::: bullseye heart rectangle star slant_up
 
-      # For core code changes, we want to do a couple morphs to see if they still look ok
-      - name: Morph shapes
+      # If shapes are added or modified
+      - name: Generate morphs from new or changed shapes
+        if: steps.changed-files-yaml.outputs.shape_any_changed == 'true'
+        env:
+          SHAPE_ALL_CHANGED_FILES: ${{ steps.changed-files-yaml.outputs.shape_all_changed_files }}
         run: |
-          parallel -j0 data-morph \
-               --start-shape panda \
-               --target-shape {} \
-               ::: bullseye heart rectangle star slant_up
+          echo "One or more shape file(s) has changed."
+          echo "List all the files that have changed: $SHAPE_ALL_CHANGED_FILES"
+          SHAPE_ARGS=$(python bin/ci.py $SHAPE_ALL_CHANGED_FILES)
+          echo "Generating morphs for the following shapes: $SHAPE_ARGS"
+          data-morph \
+               --start-shape music \
+               --target-shape $SHAPE_ARGS \
+
+      # For core code changes, we want to do a couple morphs to see if they still look ok
+      #- name: Morph shapes
+      #  run: |
+      #    parallel -j0 data-morph \
+      #         --start-shape music \
+      #         --target-shape {} \
+      #         ::: bullseye heart rectangle star slant_up
 
       - uses: actions/upload-artifact@v4
         with:
