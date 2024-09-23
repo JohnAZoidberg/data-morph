@@ -47,12 +47,34 @@ jobs:
           python -m pip install setuptools --upgrade
           python -m pip install .
 
-      # For core code changes, we want to do a couple morphs to see if they still look ok
-      - name: Morph shapes
+      - name: Get all test, doc and src files that have changed
+        id: changed-files-yaml
+        uses: tj-actions/changed-files@v45
+        with:
+          files_yaml: |
+            datasets:
+              - '**.md'
+              - src/data_morph/data/starter_shapes/*
+
+      - name: Run step if test file(s) change
+        if: steps.changed-files-yaml.outputs.datasets_any_changed == 'true'
+        env:
+          DATASETS_ALL_CHANGED_FILES: ${{ steps.changed-files-yaml.outputs.datasets_all_changed_files }}
         run: |
+          echo "One or more dataset file(s) has changed."
+          echo "List all the files that have changed: $DATASETS_ALL_CHANGED_FILES"
+          python bin/ci.py $DATASETS_ALL_CHANGED_FILES
+          DATASET_ARGS=$(python bin/ci.py $DATASETS_ALL_CHANGED_FILES)
           data-morph \
-               --start-shape panda \
-               --target-shape bullseye heart rectangle star slant_up
+               --start-shape $DATASET_ARGS \
+               --target-shape slant_up
+
+      # For core code changes, we want to do a couple morphs to see if they still look ok
+      #- name: Morph shapes
+      #  run: |
+      #    data-morph \
+      #         --start-shape panda \
+      #         --target-shape bullseye heart rectangle star slant_up
 
       - uses: actions/upload-artifact@v4
         with:
